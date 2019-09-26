@@ -169,7 +169,7 @@ weather_df %>%
 ``` r
 weather_df %>%
   ggplot(aes(x = date, y = tmax, color = name)) + 
-  geom_point() +
+  geom_point(aes(size = prcp), alpha = .35) +
   geom_smooth(se = FALSE)
 ```
 
