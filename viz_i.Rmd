@@ -158,7 +158,36 @@ violinplot
 weather_df %>%
   ggplot(aes(x = name, y = tmax)) +
   geom_violin()
+```
 
+
+ridge plots!!
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, y = name)) +
+  geom_density_ridges()
+```
+
+##saving a plot
+
+```{r}
+ggp_ridge_temp = 
+  weather_df %>%
+  ggplot(aes(x = tmax, y = name)) +
+  geom_density_ridges()
+  
+ggsave("ggplot_temp_ridge.pdf", ggp_ridge_temp)
+```
+
+
+##embedding plots in Rmd
+#keep in mind how looks w/ fig.width
+```{r, fig.width = 12}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .4) + 
+  geom_smooth(se = FALSE) 
+```
 
 
 

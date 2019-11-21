@@ -1,0 +1,409 @@
+---
+title: "ggplot 2"
+author: "Alicia Yang"
+date: "10/01/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggridges)
+library(patchwork)
+```
+
+```{r load_data, cache = TRUE}
+weather_df = 
+  rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2017-01-01",
+                      date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+##create a ggplot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+alternate way of making the plot
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+saving initial plots, mostly don't use this
+
+```{r}
+scatterplot = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+scatterplot
+```
+
+adding color 
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .4)
+```
+
+why do 'aes' positions matter?
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .4) + 
+  geom_smooth(se = FALSE)
+```
+
+vs
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .4) + 
+  geom_smooth(se = FALSE)
+```
+
+##defined color aesthetic everywhere in plot; color applying everywhere rather than single place
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .4) + 
+  geom_smooth(se = FALSE)
+```
+
+##creating facets; want names to be in columns
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .4) + 
+  geom_smooth(se = FALSE) + 
+  facet_grid(~name)
+```
+
+##This is fine but not interesting
+```{r}
+weather_df %>%
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .35) +
+  geom_smooth(se = FALSE)
+```
+
+##Some extra stuff
+##Don't make this plot
+```{r}
+weather_df %>%
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_smooth(size = 2, se = FALSE)
+```
+
+2D density
+if don't want to show every single datapoint 
+
+```{r}
+#install.packages("hexbin")
+weather_df %>%
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_hex()
+```
+
+
+## More kinds of plots
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, fill = name)) +
+  geom_histogram(position = "dodge")
+```
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, fill = name)) +
+  geom_histogram() +
+  facet_grid(~name)
+```
+
+density plots
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, fill = name)) +
+  geom_density(alpha = .3) 
+```
+
+
+boxplot
+```{r}
+weather_df %>%
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot(alpha = .3)
+```
+
+violinplot
+```{r}
+weather_df %>%
+  ggplot(aes(x = name, y = tmax)) +
+  geom_violin()
+```
+
+
+ridge plots!!
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmax, y = name)) +
+  geom_density_ridges()
+```
+
+##saving a plot
+
+```{r}
+ggp_ridge_temp = 
+  weather_df %>%
+  ggplot(aes(x = tmax, y = name)) +
+  geom_density_ridges()
+  
+ggsave("ggplot_temp_ridge.pdf", ggp_ridge_temp)
+```
+
+
+##embedding plots in Rmd
+#keep in mind how looks w/ fig.width
+```{r, fig.width = 12}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .4) + 
+  geom_smooth(se = FALSE) 
+```
+
+##creating weather data
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+## making new plots
+
+start with an old plot
+
+add labels: 
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum Temp (C)",
+    y = "Maximum Temp (C)",
+    caption = "Data from NOAA via rnoaa package"
+  ) +
+  scale_x_continuous(
+    breaks = c(-15, -5, 20),
+    labels = c("-15C", "-5C", "20C")
+  ) + 
+  scale_y_continuous(
+   trans = "sqrt", 
+    position = "right")
+```
+  
+##colors next
+
+```{r}
+ggp_base = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum Temp (C)",
+    y = "Maximum Temp (C)",
+    caption = "Data from NOAA via rnoaa package"
+  ) +
+  viridis::scale_color_viridis(
+    name = "Location", 
+    discrete = TRUE
+  )
+
+ggp_base
+```
+
+##themes
+##order matters: overarching themes first
+
+```{r}
+ggp_base + 
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+(where do my warnings come from...)
+
+```{r}
+weather_df %>%
+  filter(is.na(tmin))
+```
+
+## more than one dataset
+
+```{r}
+central_park = 
+  weather_df %>%
+  filter(name =="CentralPark_NY")
+
+waikiki = 
+  weather_df %>%
+  filter(name =="Waikiki_HA")
+
+ggplot(data = waikiki, aes(x = date, y = tmax, color = name)) +
+  geom_point (aes(size = prcp)) +
+  geom_line(data = central_park)
+```
+
+(brieg aside about colors)
+
+```{r}
+waikiki %>%
+  ggplot(aes(x = date, y = tmax)) +
+  geom_point(alpha = .5, color = "blue")
+```
+
+## Multi-panel plots 
+
+```{r}
+ggp_scatter = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmanx)) +
+  geom_point()
+
+ggp_density = 
+  weather_df %>%
+  ggplot (aes(x = tmin)) +
+  geom_density()
+
+ggp_box = 
+  weather %>%
+  ggplot(zes(x = name, y + tmax, color = name)) +
+  geom_boxplot()
+
+(ggp_scatter + ggp_density) / ggp_box
+```
+
+## data manipulation
+```{r}
+weather_df %>%
+  mutate(
+    name = factor(name), 
+    name = fct_relevel(name, "Waikiki", "CentralPark")
+  ) %>%
+  ggplot(aes(x = name, y = tmax, color = name)) +
+  geom_boxplot()
+```
+
+reorder instead of relevel
+```{r}
+weather_df %>%
+  mutate(
+    name = factor(name), 
+    name = fct_reorder(name, tmax)
+  ) %>%
+  ggplot(aes(x = name, y = tmax, color = name)) +
+  geom_boxplot()
+```
+
+```{r}
+weather_df %>%
+   mutate(
+    name = factor(name), 
+    name = fct_relevel(name, "Waterhole, WA", "Waikiki_HA", "CentralPark_NY")
+  ) %>%
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point()
+```
+
+## restructure then plot
+
+```{r}
+weather_df %>%
+  pivot_longer(
+    tmax:tmin, 
+    names_to = "observation", 
+    values_to = "temperature"
+  ) %>% 
+  ggplot(aes(x = temperature, fill = observation)) +
+  geom_density(alpha = .5) +
+  facet_grid(~name) +
+  theme(legend.position = "bottom")
+```
+
+
+litters and pups
+```{r}
+pup_data = 
+  read_csv("./data/FAS_pups.csv", col_types = "ciiiii") %>%
+  janitor::clean_names() %>%
+  mutate(sex = recode(sex, `1` = "male", `2` = "female")) 
+
+litter_data = 
+  read_csv("./data/FAS_litters.csv", col_types = "ccddiiii") %>%
+  janitor::clean_names() %>%
+  select(-pups_survive) %>%
+  separate(group, into = c("dose", "day_of_tx"), sep = 3) %>%
+  mutate(wt_gain = gd18_weight - gd0_weight,
+         day_of_tx = as.numeric(day_of_tx))
+
+fas_data = left_join(pup_data, litter_data, by = "litter_number") 
+
+fas_data %>% 
+  select(sex, dose, day_of_tx, pd_ears:pd_walk) %>% 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome", 
+    values_to = "pn_day") %>% 
+  drop_na() %>% 
+  mutate(outcome = forcats::fct_reorder(outcome, day_of_tx, median)) %>% 
+  ggplot(aes(x = dose, y = pn_day)) + 
+  geom_violin() + 
+  facet_grid(day_of_tx ~ outcome)
+```
+
+```{r}
+fas_data %>%
+  pivot_longer(
+    pd_ears:pd_walk, 
+    names_to = "outcome", 
+    values_to = "pn_day"
+  ) %>%
+  drop
+  mutate(
+    outcome = factor(outcome) 
+    outcome = fct_reorder(outcome, pn_day)
+  ) %>%
+  ggplot(aes(x = dose, y = pd_ears)) +
+  geom_violin() +
+  facet_grid(day_of_tx ~ outcome)
